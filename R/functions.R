@@ -9,13 +9,8 @@
 #' @param rt.min The reaction time threshold below which response times are considered invalid (if rt.trim = TRUE).
 #' @param rt.threshold The proportion of too-fast responses (faster than rt.min) before a survey is replaced with missing values (only active if rt.trim
 #' is set to TRUE)
-#' @import plyr
-#' @import dplyr
-#' @import reshape2
-#' @import lubridate
-#' @import stringr
-
-cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
+#' @export
+clean_sema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
   
   if (grepl('.csv', input)) {
     stop("input must be the folder containing sema data files, not a particular data file. For example 'Users/Sean/Data/sema_study_1_files/'.")
@@ -244,15 +239,15 @@ cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold
 #' This function takes a sema dataset (must contain a variable sema_id and rownr) and calculates 'datanr', a survey number variable
 #' tracking only surveys with data for each participant. This is useful if you want to time-lag using all available
 #' data (though of course this can mean that you are lagging across larger time gaps for some participants than others or on some days).
-#' This variable is calculated when the cleansema function is initially called, but you can also call it directly afterwards if you 
+#' This variable is calculated when the clean_sema function is initially called, but you can also call it directly afterwards if you 
 #' remove additional data (for example, removing surveys where responsecount is too low)
 #' 
 #' Note that this will overwrite the previous version of datanr, so if you want to keep that variable for some reason, (for instance, you 
 #' want to keep absolute data number separate from data number after surveys with too few responses are removed) then simple copy datanr into
 #' a new variable before using this function (e.g. mydata$old_data_nr <- mydata$datanr), then use this function. 
 #' 
-#' @param semadata An R dataframe containing both sema_id and rownr variables (most likely, a sema dataset -after- processing with cleansema)
-
+#' @param semadata An R dataframe containing both sema_id and rownr variables (most likely, a sema dataset -after- processing with clean_sema)
+#' @export
 data_nr_calc <- function(semadata) {
   nonmissing <- dplyr::group_by(semadata, sema_id) %>% 
     dplyr::filter(has_answers == 1) %>%
@@ -264,8 +259,15 @@ data_nr_calc <- function(semadata) {
   semadata
 }
 
+#' Get interval
+#'
+#' This function takes a sema dataset (must contain variables sema_id, timedlv and datedlv) and calculates the time interval
+#' between successive rows. It will overwrite the interval variable created by clean_sema, but may be useful for
+#' re-calculating intervals on datasets you have trimmed to only included surveys with responses.
+#' @param semadata An R dataframe containing both sema_id and datedlv variables (most likely, a sema dataset -after- processing with clean_sema)
+#' @export
 get_interval <- function(semadata) {
-  semadata <- group_by(semadata, sema_id, daynr) %>%
+  semadata <- group_by(semadata, sema_id, datedlv) %>%
     arrange(sema_id, datedlv, timedlv) %>% 
     mutate('interval' = timedlv - lag(timedlv)) %>%
     as.data.frame()

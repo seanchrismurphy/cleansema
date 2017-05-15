@@ -7,13 +7,13 @@
 data_nr_calc(semadata)
 }
 \arguments{
-\item{semadata}{An R dataframe containing both sema_id and rownr variables (most likely, a sema dataset -after- processing with cleansema)}
+\item{semadata}{An R dataframe containing both sema_id and rownr variables (most likely, a sema dataset -after- processing with clean_sema)}
 }
 \description{
 This function takes a sema dataset (must contain a variable sema_id and rownr) and calculates 'datanr', a survey number variable
 tracking only surveys with data for each participant. This is useful if you want to time-lag using all available
 data (though of course this can mean that you are lagging across larger time gaps for some participants than others or on some days).
-This variable is calculated when the cleansema function is initially called, but you can also call it directly afterwards if you 
+This variable is calculated when the clean_sema function is initially called, but you can also call it directly afterwards if you 
 remove additional data (for example, removing surveys where responsecount is too low)
 }
 \details{
