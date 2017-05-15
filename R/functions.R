@@ -75,24 +75,24 @@ cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold
   
   
   print(paste0('The median number of surveys received in your data was ', median(as.numeric(table(files$sema_id))),
-               ' and the median number of completed surveys was ', median(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+               ' and the median number of responses was ', median(as.numeric(table(files$sema_id[files$has_answers == 1])))))
   
   
   print(paste0('The greatest number of surveys received was ', max(as.numeric(table(files$sema_id))),
-               ' and the greatest number of completed surveys was ', max(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+               ' and the greatest number of responses was ', max(as.numeric(table(files$sema_id[files$has_answers == 1])))))
   
   
   print(paste0('The fewest number of surveys received was ', min(as.numeric(table(files$sema_id))),
-               ' and the fewest number of completed surveys was ', min(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+               ' and the fewest number of responses was ', min(as.numeric(table(files$sema_id[files$has_answers == 1])))))
   
   # We have to include the response time filtering before we calculate completenr, because we don't 
-  # want to include missing surveys there. But we want to calculate surveys completed first so we know
+  # want to include missing surveys there. But we want to calculate surveys responded first so we know
   # how many were removed for RT.
   
   # Create the aggregate variables of surveys received and complete for each P. 
   files <- dplyr::group_by(files, sema_id) %>% 
     dplyr::mutate('surveys_received' = n()) %>% 
-    dplyr::mutate('surveys_completed' = sum(has_answers == 1)) %>% 
+    dplyr::mutate('surveys_responded' = sum(has_answers == 1)) %>% 
     as.data.frame()
   
   # Now we count the number of too-fast responses for each survey.
@@ -153,18 +153,17 @@ cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold
     
   }
   
-
+  # Count the number of entire surveys removed because of RT speed. We include this regardless of 
+  # whether rt.trim is on so the output always has the same number of columns. 
+  files <- dplyr::group_by(files, sema_id) %>% 
+    dplyr::mutate('surveys_removed' = surveys_responded - sum(has_answers == 1)) %>% 
+    as.data.frame()
   
   # Create datanr, the number of survey with data (in case people want to lag on that instead)
   # Wrote a function to do this (see bottom of file).
   files <- data_nr_calc(files)
   
-  
-  # Count the number of entire surveys removed because of RT speed. We include this regardless of 
-  # whether rt.trim is on so the output always has the same number of columns. 
-  files <- dplyr::group_by(files, sema_id) %>% 
-    dplyr::mutate('surveys_removed' = surveys_completed - sum(has_answers == 1)) %>% 
-    as.data.frame()
+
   
   # Date and time cleaning. 
   delivtime <- lubridate::dmy_hms(files$delivered)
