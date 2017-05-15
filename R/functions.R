@@ -181,10 +181,7 @@ cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold
   # We still need:
   
   # Interval in hours from previous delivered, and day number (the number of days for the participant)
-  files <- group_by(files, sema_id, datedlv) %>%
-    arrange(sema_id, datedlv, timedlv) %>% 
-    mutate('interval' = timedlv - lag(timedlv)) %>%
-    as.data.frame()
+  files <- get_interval(files)
   
   # Can't think of a more efficient way to do this atm. Slice each partiicpant to have only one day, 
   # arrange by day, create day number, then join it to the main file. There might be a filter technique
@@ -202,6 +199,8 @@ cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold
   
   rm(days)
   
+  files$day_of_week <- lubridate::wday(files$delivered, label = TRUE)
+  files$weekend <- files$day_of_week %in% c('Sat', 'Sun')
   
   ### Final steps that have yet to be added. These would need to slice the first row of each participant 
   ### to get the start of the study for them, or the first row of each participant-day to get the start
@@ -262,5 +261,14 @@ data_nr_calc <- function(semadata) {
     as.data.frame()
   
   semadata <- join(semadata, nonmissing, by = c('sema_id', 'rownr'))
+  semadata
+}
+
+get_interval <- function(semadata) {
+  semadata <- group_by(semadata, sema_id, daynr) %>%
+    arrange(sema_id, datedlv, timedlv) %>% 
+    mutate('interval' = timedlv - lag(timedlv)) %>%
+    as.data.frame()
+  
   semadata
 }
