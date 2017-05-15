@@ -1,13 +1,36 @@
-### For testing purposes
-input <- '/Users/Sean/Dropbox/Post-Doc/Code/SEMA/sema_export_Objectifying_Experiences_2016_2017_04_25_22_29_08'
-output <- '/Users/Sean/Desktop/clean data.csv'
-rt.min <- 500
-rt.trim <- TRUE
-cleansema <- function(input, output, rt.min = 500) {
+#' Clean sema data
+#'
+#' This function collates and performs initial cleaning of raw data from the SEMA smartphone app. It saves the cleaned data to a file of your choice. 
+#' @param input The file path to the folder containing your sema data files. Important that this is the folder, not a specific file.
+#' @param output The file path to the csv file you want to save your cleaned data in. This needs to be specifically a .csv, not a folder.
+#' @param rt.trim Whether to remove responses that are below the rt.min threshold on reaction time. If this is TRUE, first, surveys with 
+#' more responses below rt.min (default 500ms) than the allowed rt.threshold (default .5 or 50%) will be replaced with missing values (NA). 
+#' Then, individual responses below the reaction time threshold from remaining surveys will be replaced with NA values. 
+#' @param rt.min The reaction time threshold below which response times are considered invalid (if rt.trim = TRUE).
+#' @param rt.threshold The proportion of too-fast responses (faster than rt.min) before a survey is replaced with missing values (only active if rt.trim
+#' is set to TRUE)
+#' @import plyr
+#' @import dplyr
+#' @import reshape2
+#' @import lubridate
+#' @import stringr
+
+cleansema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
+  
+  if (grepl('.csv', input)) {
+    stop("input must be the folder containing sema data files, not a particular data file. For example 'Users/Sean/Data/sema_study_1_files/'.")
+  }
+  
+  if (!grepl('.csv$', output)) {
+    stop("Output must be a csv file (for example, 'cleaned data.csv'), or a path to a csv file if you don't want to save output in your current working directory, 
+         (for example, 'Users/Sean/Dropbox/Data/cleaned data.csv')")
+  }
+  
+  print('Beginning cleaning process')
   
   # Stitch together all the different csvs for versions of the program (survey). Variables that only appear
   # in some surveys will be filled with NA in other survey sections.
-  files = lapply(list.files(input, pattern = '*.csv'), read.csv, stringsAsFactors = FALSE)
+  files = lapply(list.files(input, pattern = '*.csv', full.names = TRUE), read.csv, stringsAsFactors = FALSE)
   files <- plyr::rbind.fill(files)
   
   # Lower all the column names
@@ -50,6 +73,18 @@ cleansema <- function(input, output, rt.min = 500) {
     dplyr::mutate('rownr' = 1:n()) %>% 
     as.data.frame()
   
+  
+  print(paste0('The median number of surveys received in your data was ', median(as.numeric(table(files$sema_id))),
+               ' and the median number of completed surveys was ', median(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+  
+  
+  print(paste0('The greatest number of surveys received was ', max(as.numeric(table(files$sema_id))),
+               ' and the greatest number of completed surveys was ', max(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+  
+  
+  print(paste0('The fewest number of surveys received was ', min(as.numeric(table(files$sema_id))),
+               ' and the fewest number of completed surveys was ', min(as.numeric(table(files$sema_id[files$has_answers == 1])))))
+  
   # We have to include the response time filtering before we calculate completenr, because we don't 
   # want to include missing surveys there. But we want to calculate surveys completed first so we know
   # how many were removed for RT.
@@ -65,41 +100,65 @@ cleansema <- function(input, output, rt.min = 500) {
   
   # And the number of actual responses made in each survey. This is actually somewhat useful in itself - you
   # could use this to filter out surveys which have too much missing data. 
-  files$rtcount <- apply(files[, grep('_rt', colnames(files))], 1, function(x) sum(!is.na(x)))
+  files$responsecount <- apply(files[, grep('_rt', colnames(files))], 1, function(x) sum(!is.na(x)))
   
   # Create a vector of the actual survey content to use for removing responses
   survey_responses <- (grep('response_time_ms', colnames(files)) + 1):(grep('rownr', colnames(files)) - 1)
   
   # First we optionally remove surveys with too many too-fast responses
   if (rt.trim) {
-    toofast <- files$fastrtcount/files$rtcount
+    toofast <- files$fastrtcount/files$responsecount
     # Correct for division by zero in the case of missing surveys. 
     toofast[!is.finite(toofast)] <- 0
-    toofast <- toofast > .5
+    toofast <- toofast > rt.threshold
     
     files[toofast, survey_responses] <- NA
     files[toofast, 'has_answers'] <- 0
+    
+    print( paste0(sum(toofast), ' surveys removed for containing more than ', rt.threshold*100, ' percent missing data'))
     rm(toofast)
   }
   
-  # Then we optionally remove those too-fast responses that remain in other surveys
+  # Then we optionally remove those too-fast responses that remain in other surveys. Unfortunately we can't
+  # find the matching responses too easily because of the multiple choice ones messing it up. 
+  
   if (rt.trim) {
-    files[, grep('_rt', colnames(files))][files[, grep('_rt', colnames(files))] < rt.min] <- NA
+    
+    # First do the easy part - removing the non multi-choice responses that match too-fast responding. 
+    rts <- grep('_rt', colnames(files), value = TRUE)
+    names <- gsub('_rt', '', rts)
+    rts <- rts[!names %in% multi]
+    names <- names[!names %in% multi]
+    
+    if (!(all(names %in% colnames(files)))) {
+      stop('Error: All reaction time variables do not have a matching data variable')
+    }
+    
+    files[, names][files[, rts] < rt.min & !is.na(files[, rts])] <- NA
+    
+    # Now to do the multiple choice responses - removing these one at a time due to the more complicated
+    # structure. The !is.na calls aren't strictly neccesary but help to actually see what you're removing
+    # if you use the code by hand. 
+    for (i in 1:length(multi)) {
+      rts <- paste0(multi[i], '_rt')
+      names <- grep(paste0(multi[i], '\\.[0-9]'), colnames(files), value = TRUE)
+      files[, names][files[rts] < rt.min & !is.na(files[rts]), ] <- NA
+    }
+    
+    print (paste0(sum(files[, grep('_rt', colnames(files))] < rt.min & !is.na(files[, grep('_rt', colnames(files))])), 
+           ' additional answers removed across all surveys for having reaction times below ', rt.min, 'ms.'))
+    # Now to remove the RTs themselves - all at once because this is easier. 
+    files[, grep('_rt', colnames(files))][files[, grep('_rt', colnames(files))] < rt.min & !is.na(files[, grep('_rt', colnames(files))])] <- NA
+    
+    
   }
   
 
   
-  # Create completenr, the number of survey completed (in case people want to lag on that instead)
-  # Since using filter to get the completenr removes the others, have to do it separately and join
-  nonmissing <- dplyr::group_by(files, sema_id) %>% 
-    dplyr::filter(has_answers == 1) %>%
-    dplyr::mutate('completednr' = 1:n()) %>%
-    dplyr::select(sema_id, rownr, completednr) %>%
-    as.data.frame()
+  # Create datanr, the number of survey with data (in case people want to lag on that instead)
+  # Wrote a function to do this (see bottom of file).
+  files <- data_nr_calc(files)
   
-  files <- join(files, nonmissing)
-  
-  rm(nonmissing)
   
   # Count the number of entire surveys removed because of RT speed. We include this regardless of 
   # whether rt.trim is on so the output always has the same number of columns. 
@@ -122,7 +181,7 @@ cleansema <- function(input, output, rt.min = 500) {
   
   # We still need:
   
-  # Interval in minutes from previous delivered, and day number (the number of days for the participant)
+  # Interval in hours from previous delivered, and day number (the number of days for the participant)
   files <- group_by(files, sema_id, datedlv) %>%
     arrange(sema_id, datedlv, timedlv) %>% 
     mutate('interval' = timedlv - lag(timedlv)) %>%
@@ -140,7 +199,7 @@ cleansema <- function(input, output, rt.min = 500) {
     select(sema_id, datedlv, daynr) %>%
     as.data.frame()
   
-  files <- join(files, days)
+  files <- join(files, days, by = c('sema_id', 'datedlv'))
   
   rm(days)
   
@@ -148,12 +207,61 @@ cleansema <- function(input, output, rt.min = 500) {
   ### Final steps that have yet to be added. These would need to slice the first row of each participant 
   ### to get the start of the study for them, or the first row of each participant-day to get the start
   ### of the day for them. 
+  start <- group_by(files, sema_id) %>%
+    slice(1) %>%
+    mutate('survey_start' = delivered) %>%
+    select(sema_id, survey_start) %>%
+    as.data.frame()
+  
+  files <- join(files, start,  by = c('sema_id'))
+  
+  start <- group_by(files, sema_id, datedlv) %>%
+    slice(1) %>%
+    mutate('day_start' = delivered) %>%
+    select(datedlv, sema_id, day_start) %>%
+    as.data.frame()
+  
+  files <- join(files, start, by = c('sema_id', 'datedlv'))
+  
+  rm(start)
   
   # Calculate a continuous time variable like minutes since the start of the study. To look at time trends. 
+  files$minutes_since_survey_start <- as.numeric((lubridate::dmy_hms(files$delivered) - lubridate::dmy_hms(files$survey_start))/60)
   
-  # Could do minutes since first survey of day as well. To look at diurnal trends. To look at whether responding changes over the 
+  # Do minutes since first survey of day as well. To look at diurnal trends. To look at whether responding changes over the 
   # course of day regardless of what time it is - might be survey fatigue. 
+  files$minutes_since_day_start <- as.numeric((lubridate::dmy_hms(files$delivered) - lubridate::dmy_hms(files$day_start))/60)
   
   
   
+  print(paste0('Saving processed data at ', output))
+  write.csv(files, output, row.names = FALSE)
+  
+  
+  
+}
+
+#' Calculate data number
+#'
+#' This function takes a sema dataset (must contain a variable sema_id and rownr) and calculates 'datanr', a survey number variable
+#' tracking only surveys with data for each participant. This is useful if you want to time-lag using all available
+#' data (though of course this can mean that you are lagging across larger time gaps for some participants than others or on some days).
+#' This variable is calculated when the cleansema function is initially called, but you can also call it directly afterwards if you 
+#' remove additional data (for example, removing surveys where responsecount is too low)
+#' 
+#' Note that this will overwrite the previous version of datanr, so if you want to keep that variable for some reason, (for instance, you 
+#' want to keep absolute data number separate from data number after surveys with too few responses are removed) then simple copy datanr into
+#' a new variable before using this function (e.g. mydata$old_data_nr <- mydata$datanr), then use this function. 
+#' 
+#' @param semadata An R dataframe containing both sema_id and rownr variables (most likely, a sema dataset -after- processing with cleansema)
+
+data_nr_calc <- function(semadata) {
+  nonmissing <- dplyr::group_by(semadata, sema_id) %>% 
+    dplyr::filter(has_answers == 1) %>%
+    dplyr::mutate('datanr' = 1:n()) %>%
+    dplyr::select(sema_id, rownr, datanr) %>%
+    as.data.frame()
+  
+  semadata <- join(semadata, nonmissing, by = c('sema_id', 'rownr'))
+  semadata
 }
