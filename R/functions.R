@@ -1,8 +1,7 @@
 #' Clean sema data
 #'
-#' This function collates and performs initial cleaning of raw data from the SEMA smartphone app. It saves the cleaned data to a file of your choice. 
+#' This function collates and performs initial cleaning of raw data from the SEMA smartphone app. 
 #' @param input The file path to the folder containing your sema data files. Important that this is the folder, not a specific file.
-#' @param output The file path to the csv file you want to save your cleaned data in. This needs to be specifically a .csv, not a folder.
 #' @param rt.trim Whether to remove responses that are below the rt.min threshold on reaction time. If this is TRUE, first, surveys with 
 #' more responses below rt.min (default 500ms) than the allowed rt.threshold (default .5 or 50%) will be replaced with missing values (NA). 
 #' Then, individual responses below the reaction time threshold from remaining surveys will be replaced with NA values. 
@@ -10,15 +9,12 @@
 #' @param rt.threshold The proportion of too-fast responses (faster than rt.min) before a survey is replaced with missing values (only active if rt.trim
 #' is set to TRUE)
 #' @export
-clean_sema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
+clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
   
+  # Note - I have updated the package to return a dataframe rather than save a csv. More flexibility and the number of lines of code to save the output
+  # is roughly the same anyway. 
   if (grepl('.csv', input)) {
     stop("input must be the folder containing sema data files, not a particular data file. For example 'Users/Sean/Data/sema_study_1_files/'.")
-  }
-  
-  if (!grepl('.csv$', output)) {
-    stop("Output must be a csv file (for example, 'cleaned data.csv'), or a path to a csv file if you don't want to save output in your current working directory, 
-         (for example, 'Users/Sean/Dropbox/Data/cleaned data.csv')")
   }
   
   print('Beginning cleaning process')
@@ -110,7 +106,7 @@ clean_sema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshol
     files[toofast, survey_responses] <- NA
     files[toofast, 'has_answers'] <- 0
     
-    print( paste0(sum(toofast), ' surveys removed for containing more than ', rt.threshold*100, ' percent missing data'))
+    print( paste0(sum(toofast), ' surveys removed for containing more than ', rt.threshold*100, ' percent too-fast responses'))
     rm(toofast)
   }
   
@@ -226,11 +222,17 @@ clean_sema <- function(input, output, rt.trim = FALSE, rt.min = 500, rt.threshol
   files$minutes_since_day_start <- as.numeric((lubridate::dmy_hms(files$delivered) - lubridate::dmy_hms(files$day_start))/60)
   
   
+  # Check the timezones of the participants for errors. 
+  timezonecheck <- dplyr::group_by(files, sema_id) %>% 
+    dplyr::summarize('timezones' = length(table(timezone))) %>%
+    dplyr::filter(timezones > 1)
   
-  print(paste0('Saving processed data at ', output))
-  write.csv(files, output, row.names = FALSE)
+  print(paste0('Warning: The following participants have more than one timezone listed - this may indicate errors or travel on their part and could effect the order of the data: ', 
+               paste(timezonecheck$sema_id, collapse = ', ')))
+  rm(timezonecheck)
   
   
+  return(files)
   
 }
 

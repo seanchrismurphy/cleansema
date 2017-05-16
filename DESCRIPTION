@@ -1,11 +1,11 @@
 Package: cleansema
 Title: Clean Sema Data
 Version: 0.1
-Authors@R: person(“Sean”, “Murphy”, email = “seanchrismurphy@gmail.com”, role = c("aut", "cre"))
+Authors@R: person("Sean", "Murphy", email = "seanchrismurphy@gmail.com", role = c("aut", "cre"))
 Author: Sean Murphy [aut, cre]
 Maintainer: Sean Murphy <seanchrismurphy@gmail.com>
 Description: The cleansema package was built to rapidly take folders of raw data from the SEMA smartphone application and turn them into a single, clean dataframe, while also calculating variables that will commonly prove useful for analysis.
-Depends: R (>= 3.4.0)
+Depends: R (>= 3.2.0)
 Imports: plyr, dplyr, stringr, reshape2, lubridate
 License: Attribution-NonCommercial 3.0 Australia (CC BY-NC 3.0 AU)
 Encoding: UTF-8
