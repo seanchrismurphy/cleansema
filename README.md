@@ -1,7 +1,7 @@
 # cleansema
 
 ## Overview
-The cleansema package is designed to perform the initial cleaning of data collected using the SEMA smartphone application. All you need to do is use the `clean_sema` function in R by pointing it at the directory containing your raw data, and it will save clean, processed data as output. 
+The cleansema package is designed to perform the initial cleaning of data collected using the SEMA smartphone application. All you need to do is use the `clean_sema` function in R by pointing it at the directory containing your raw data, and it will give clean, processed data as output. 
 
 ## Use
 You'll first want to install R and Rstudio (see [here](https://www.researchgate.net/publication/316678011_A_Psychologist's_Guide_to_R]) for a quick walkthrough of that process, which is quite simple.)
@@ -14,18 +14,23 @@ library(devtools)
 install_github("seanchrismurphy/cleansema")
 ```
 
-After that, you're ready to use the clean_sema function on your data. This function requires two pieces of information - the input folder that contains your raw data, and the path to the .csv file you'd like to create with the processed data in it.
+After that, you're ready to use the clean_sema function on your data. This function requires only the input folder that contains your raw data to use.
 
 
-For example, running the code like this will take any files in the 'Raw Sema Data' folder, process them, and save them on the desktop as a csv file called 'clean_data.csv'. Adjust these two paramaters as needed (note that Windows users will need to use forward slashes, not the default back slashes that Windows uses)
+For example, running the code below will take any files in the 'Raw Sema Data' folder, process them, and load them in R as a dataset called clean_data. Adjust the input paramaters as needed (note that Windows users will need to use forward slashes, not the default back slashes that Windows uses)
 
 ```
 require(cleansema)
 
-clean_sema(input = 'Users/Sean/Raw Sema Data/', output = 'Users/Sean/Desktop/clean_data.csv')
+clean_data <- clean_sema(input = 'Users/Sean/Raw Sema Data/')
 ```
 
-That's all there is to it!
+Once the data is loaded into R, you can either work on it there, or export it as a clean .csv file, suitable for import into your statistical package of choice, using the code below. You'll want to give the full file path and the name of the .csv file you hope to save. You can ignore the row.names = FALSE command - that's just a bit of bookkeeping:
+
+```
+write.csv(clean_data, 'Users/Sean/Clean Data/cleaned data.csv', row.names = FALSE)
+
+And that's all there is to it!
 
 ## How it works and what you get
 
@@ -47,3 +52,5 @@ The clean_sema function works in several steps, outlined below.
     3. The `daynr` variable is calculated. This represents, for each participant, which 'day' of the survey this is for them, beginning from 1 for ease of interpretation (though you will often want to subtract 1 from this to ensure the baseline is 0 for analytic purposes)
     4. The `day_of_week` and `weekend` variables are created. These label the day of the week (e.g. Mon, Sun) and whether or not it was a weekend, respectively. 
     5. The `survey_start` and `day_start` variables are calculated. These are simply the date and time the participant received their first survey of the study, or of the date, respectively. These are then used to calculate the `minutes_since_survey_start` and `minutes_since_day_start` variables for each response (these are both specific to each participant, and may be useful for measuring diurnal trends or fatigue effects separate to the actual date or time). 
+    
+The function will also print some output when run - giving you basic descriptive counts on your data, and also warning you if individual participants have data from more than one timezone.
