@@ -29,6 +29,7 @@ Once the data is loaded into R, you can either work on it there, or export it as
 
 ```
 write.csv(clean_data, 'Users/Sean/Clean Data/cleaned data.csv', row.names = FALSE)
+```
 
 And that's all there is to it!
 
