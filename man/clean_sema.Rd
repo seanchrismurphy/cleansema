@@ -4,13 +4,11 @@
 \alias{clean_sema}
 \title{Clean sema data}
 \usage{
-clean_sema(input, output, rt.trim = FALSE, rt.min = 500,
-  rt.threshold = 0.5)
+clean_sema(input, rt.trim = FALSE, rt.min = 500, rt.threshold = 0.5,
+  na.value = NULL)
 }
 \arguments{
 \item{input}{The file path to the folder containing your sema data files. Important that this is the folder, not a specific file.}
-
-\item{output}{The file path to the csv file you want to save your cleaned data in. This needs to be specifically a .csv, not a folder.}
 
 \item{rt.trim}{Whether to remove responses that are below the rt.min threshold on reaction time. If this is TRUE, first, surveys with 
 more responses below rt.min (default 500ms) than the allowed rt.threshold (default .5 or 50%) will be replaced with missing values (NA). 
@@ -20,7 +18,10 @@ Then, individual responses below the reaction time threshold from remaining surv
 
 \item{rt.threshold}{The proportion of too-fast responses (faster than rt.min) before a survey is replaced with missing values (only active if rt.trim
 is set to TRUE)}
+
+\item{na.value}{By default this is NULL, which means that missing data will be saved as NA, which is the default in R (and is read nicely by SPPS, I believe). 
+If you wish to set missing values to something particular like -99, for instance, you would set na.value = -99}
 }
 \description{
-This function collates and performs initial cleaning of raw data from the SEMA smartphone app. It saves the cleaned data to a file of your choice.
+This function collates and performs initial cleaning of raw data from the SEMA smartphone app.
 }

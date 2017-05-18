@@ -8,8 +8,10 @@
 #' @param rt.min The reaction time threshold below which response times are considered invalid (if rt.trim = TRUE).
 #' @param rt.threshold The proportion of too-fast responses (faster than rt.min) before a survey is replaced with missing values (only active if rt.trim
 #' is set to TRUE)
+#' @param na.value By default this is NULL, which means that missing data will be saved as NA, which is the default in R (and is read nicely by SPPS, I believe). 
+#' If you wish to set missing values to something particular like -99, for instance, you would set na.value = -99
 #' @export
-clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) {
+clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, na.value = NULL) {
   
   # Note - I have updated the package to return a dataframe rather than save a csv. More flexibility and the number of lines of code to save the output
   # is roughly the same anyway. 
@@ -231,6 +233,10 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5) 
                paste(timezonecheck$sema_id, collapse = ', ')))
   rm(timezonecheck)
   
+  if (!(is.null(na.value))) {
+    print(paste0('Saving missing values as ', na.value))
+    files[is.na(files)] <- na.value
+  }
   
   return(files)
   
