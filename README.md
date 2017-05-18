@@ -6,7 +6,7 @@ The cleansema package is designed to perform the initial cleaning of data collec
 ## Use
 You'll first want to install R and Rstudio (see [here](https://www.researchgate.net/publication/316678011_A_Psychologist's_Guide_to_R]) for a quick walkthrough of that process, which is quite simple.)
 
-One you have RStudio installed and open, using the cleansema package is simple. The first time you want to use it, you'll need to run the following code to install it. Paste this code into the command line of RStudio and hit run:
+Once you have RStudio installed and open, using the cleansema package is simple. The first time you want to use it, you'll need to run the following code to install it. Paste this code into the command line of RStudio and hit run:
 
 ```
 install.packages('devtools')
@@ -30,6 +30,8 @@ Once the data is loaded into R, you can either work on it there, or export it as
 ```
 write.csv(clean_data, 'Users/Sean/Clean Data/cleaned data.csv', row.names = FALSE)
 ```
+
+There are a few optional extras available - you can have `clean_sema` set data to missing based on a certain reaction time threshold, and you can choose a specific value for missing data if you'd like it to be something other than NA. To see how to use these, just type `?clean_sema` at the R console after you've run the `require(cleansema` line of code. 
 
 And that's all there is to it!
 
