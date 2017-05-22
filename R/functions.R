@@ -108,7 +108,7 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     files[toofast, survey_responses] <- NA
     files[toofast, 'has_answers'] <- 0
     
-    print( paste0(sum(toofast), ' surveys removed for containing more than ', rt.threshold*100, ' percent too-fast responses'))
+    print( paste0(sum(toofast), ' surveys replaced with missing data for containing more than ', rt.threshold*100, ' percent too-fast responses'))
     rm(toofast)
   }
   
@@ -270,14 +270,14 @@ data_nr_calc <- function(semadata) {
 #' Get interval
 #'
 #' This function takes a sema dataset (must contain variables sema_id, timedlv and datedlv) and calculates the time interval
-#' between successive rows. It will overwrite the interval variable created by clean_sema, but may be useful for
+#' between successive rows (in minutes as this is more useful). It will overwrite the interval variable created by clean_sema, but may be useful for
 #' re-calculating intervals on datasets you have trimmed to only included surveys with responses.
 #' @param semadata An R dataframe containing both sema_id and datedlv variables (most likely, a sema dataset -after- processing with clean_sema)
 #' @export
 get_interval <- function(semadata) {
   semadata <- group_by(semadata, sema_id, datedlv) %>%
     arrange(sema_id, datedlv, timedlv) %>% 
-    mutate('interval' = timedlv - lag(timedlv)) %>%
+    mutate('interval' = 60*(timedlv - lag(timedlv))) %>%
     as.data.frame()
   
   semadata
