@@ -6,7 +6,7 @@ The cleansema package is designed to perform the initial cleaning of data collec
 ## Use
 You'll first want to install R and Rstudio (see [here](https://www.researchgate.net/publication/316678011_A_Psychologist's_Guide_to_R]) for a quick walkthrough of that process, which is quite simple.)
 
-One you have RStudio installed and open, using the cleansema package is simple. The first time you want to use it, you'll need to run the following code to install it. Paste this code into the command line of RStudio and hit run:
+Once you have RStudio installed and open, using the cleansema package is simple. The first time you want to use it, you'll need to run the following code to install it. Paste this code into the command line of RStudio and hit run:
 
 ```
 install.packages('devtools')
@@ -31,6 +31,8 @@ Once the data is loaded into R, you can either work on it there, or export it as
 write.csv(clean_data, 'Users/Sean/Clean Data/cleaned data.csv', row.names = FALSE)
 ```
 
+There are a few optional extras available - you can have `clean_sema` set data to missing based on a certain reaction time threshold, and you can choose a specific value for missing data if you'd like it to be something other than NA. To see how to use these, just type `?clean_sema` at the R console after you've run the `require(cleansema` line of code. 
+
 And that's all there is to it!
 
 ## How it works and what you get
@@ -49,7 +51,7 @@ The clean_sema function works in several steps, outlined below.
 11. The `datanr` variable is calculated. This is similar to `rownr`, but indexes only surveys where has_answers is 1. This can be used to create lagged variables such that all available data is used, though note this may cause the time interval between lagged responses to vary considerably. 
 12. Various date and time variables are calculated from `delivered`, the timestamp from the participant's phone indicating when the survey was received. 
     1. First, `datedlv` and `timedlv` are calculated - these index the date and the time (in 24 hour time) that the participant began responding.
-    2. The `interval` variable is calculated. This represents the time (in hours) since the previous survey. It may prove useful both in ensuring that prompts were delivered at the correct time intervals, but also as a moderator of time-lagged effects.
+    2. The `interval` variable is calculated. This represents the time (in **minutes**) since the previous survey. It may prove useful both in ensuring that prompts were delivered at the correct time intervals, but also as a moderator of time-lagged effects.
     3. The `daynr` variable is calculated. This represents, for each participant, which 'day' of the survey this is for them, beginning from 1 for ease of interpretation (though you will often want to subtract 1 from this to ensure the baseline is 0 for analytic purposes)
     4. The `day_of_week` and `weekend` variables are created. These label the day of the week (e.g. Mon, Sun) and whether or not it was a weekend, respectively. 
     5. The `survey_start` and `day_start` variables are calculated. These are simply the date and time the participant received their first survey of the study, or of the date, respectively. These are then used to calculate the `minutes_since_survey_start` and `minutes_since_day_start` variables for each response (these are both specific to each participant, and may be useful for measuring diurnal trends or fatigue effects separate to the actual date or time). 
