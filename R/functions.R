@@ -61,8 +61,29 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   # sum(files[78, grep('_rt', colnames(files))])
   # files[78, 'response_time_ms']
   
+  
+  ### Update: Have learned that the row number in the raw data does -not- correspond to survey delivery, as I had been led to believe. 
+  ### Pete meant the row number variable he had calculated in later data. So we need to first sort by delivery date, and only then can 
+  ### we accurately create this variable. For this reason, we calculate delivery time earlier than before. 
+  
+  
+  # Date and time cleaning. 
+  delivtime <- lubridate::dmy_hms(files$delivered)
+  
+  # Extract the date delivered
+  files$datedlv <- lubridate::date(delivtime)
+  
+  # A bit hacky, and maybe there's a direct function for this, but just extracting the time of day in 24 hour. 
+  files$timedlv <- lubridate::hour(delivtime) + 
+    lubridate::minute(delivtime)/60 + 
+    lubridate::second(delivtime)/3600
+  
+  rm(delivtime)
+  
   # Create rownr, the number of the survey received
-  files <- dplyr::group_by(files, sema_id) %>% 
+  # We've added an arrange call here to sort things by the delivery time, so row number will be accurate. 
+  files <- dplyr::arrange(sema_id, datedlv, timedlv) %>%
+    dplyr::group_by(files, sema_id) %>% 
     dplyr::mutate('rownr' = 1:n()) %>% 
     as.data.frame()
   
@@ -158,18 +179,7 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   
 
   
-  # Date and time cleaning. 
-  delivtime <- lubridate::dmy_hms(files$delivered)
-  
-  # Extract the date delivered
-  files$datedlv <- lubridate::date(delivtime)
-  
-  # A bit hacky, and maybe there's a direct function for this, but just extracting the time of day in 24 hour. 
-  files$timedlv <- lubridate::hour(delivtime) + 
-    lubridate::minute(delivtime)/60 + 
-    lubridate::second(delivtime)/3600
-  
-  rm(delivtime)
+
   
   # We still need:
   
