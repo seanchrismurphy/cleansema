@@ -81,8 +81,8 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   rm(delivtime)
   
   # Create rownr, the number of the survey received
-  # We've added an arrange call here to sort things by the delivery time, so row number will be accurate. 
   files <- files %>% dplyr::arrange(sema_id, datedlv, timedlv) %>%
+  # We've added an arrange call here to sort things by the delivery time, so row number will be accurate. 
     dplyr::group_by(sema_id) %>% 
     dplyr::mutate('rownr' = 1:n()) %>% 
     as.data.frame()
