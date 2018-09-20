@@ -44,20 +44,12 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   # then for the multi-choice items, taking the mean since they're the same across all choices within
   # a single item. 
   
-  if (length(grep('\\.[0-9]*$', colnames(files)) > 0) {
+  if (length(grep('\\.[0-9]*$', colnames(files)) > 0)) {
     multi <- unique(str_match(grep('\\.[0-9]*$', colnames(files), value = TRUE), '([a-z]*)\\.')[,2])
     
     for (x in 1:length(multi)) {
       files[[paste0(multi[x], '_rt')]] <- rowMeans(files[, grep(paste0(multi[x], '\\.[0-9]*_rt$'), colnames(files))], na.rm = TRUE)
     }
-  if length(grep('\\.[0-9]*$', colnames(files)) > 0 {
-    multi <- unique(str_match(grep('\\.[0-9]*$', colnames(files), value = TRUE), '([a-z]*)\\.')[,2])
-    
-    for (x in 1:length(multi)) {
-      files[[paste0(multi[x], '_rt')]] <- rowMeans(files[, grep(paste0(multi[x], '\\.[0-9]*_rt$'), colnames(files))], na.rm = TRUE)
-    }
-  }
-  
   
   # Then remove the original Rts
   files <- files[, -grep('[0-9]+_rt$', colnames(files))]
