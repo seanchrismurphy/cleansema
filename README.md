@@ -16,6 +16,8 @@ install_github("seanchrismurphy/cleansema")
 
 After that, you're ready to use the clean_sema function on your data. This function requires only the input folder that contains your raw data to use.
 
+*NOTE* Sema should export a zipped file - once you unzip that file into a folder, these are the raw data files that clean_sema expects, and no more needs to be done to them (except to delete the ones you don't want read in). 
+
 
 For example, running the code below will take any files in the 'Raw Sema Data' folder, process them, and load them in R as a dataset called clean_data. Adjust the input paramaters as needed (note that Windows users will need to use forward slashes, not the default back slashes that Windows uses)
 
