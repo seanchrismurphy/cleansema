@@ -50,10 +50,12 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     for (x in 1:length(multi)) {
       files[[paste0(multi[x], '_rt')]] <- rowMeans(files[, grep(paste0(multi[x], '\\.[0-9]*_rt$'), colnames(files))], na.rm = TRUE)
     }
+  } else {
+    multi <- NULL
   }
   
   # Then remove the original Rts
-  files <- files[, -grep('[0-9]+_rt$', colnames(files))]
+  files <- files[, -grep('\\.[0-9]+_rt$', colnames(files))]
   
   # Now I'm getting a discrepancy such that the response_time_ms variable thinks it took longer than the sum
   # says (whenever there is an error). This only happens rarely, and I can't figure out why. To be 
@@ -143,8 +145,11 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     # First do the easy part - removing the non multi-choice responses that match too-fast responding. 
     rts <- grep('_rt', colnames(files), value = TRUE)
     names <- gsub('_rt', '', rts)
-    rts <- rts[!names %in% multi]
-    names <- names[!names %in% multi]
+    
+    if (length(multi) > 0) {
+      rts <- rts[!names %in% multi]
+      names <- names[!names %in% multi]
+    }
     
     if (!(all(names %in% colnames(files)))) {
       stop('Error: All reaction time variables do not have a matching data variable')
