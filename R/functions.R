@@ -50,12 +50,15 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     for (x in 1:length(multi)) {
       files[[paste0(multi[x], '_rt')]] <- rowMeans(files[, grep(paste0(multi[x], '\\.[0-9]*_rt$'), colnames(files))], na.rm = TRUE)
     }
+    
+    # Then remove the original Rts
+    files <- files[, -grep('\\.[0-9]+_rt$', colnames(files))]
+    
   } else {
     multi <- NULL
   }
   
-  # Then remove the original Rts
-  files <- files[, -grep('\\.[0-9]+_rt$', colnames(files))]
+
   
   # Now I'm getting a discrepancy such that the response_time_ms variable thinks it took longer than the sum
   # says (whenever there is an error). This only happens rarely, and I can't figure out why. To be 
