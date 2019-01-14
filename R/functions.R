@@ -50,12 +50,15 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     for (x in 1:length(multi)) {
       files[[paste0(multi[x], '_rt')]] <- rowMeans(files[, grep(paste0(multi[x], '\\.[0-9]*_rt$'), colnames(files))], na.rm = TRUE)
     }
+    
+    # Then remove the original Rts
+    files <- files[, -grep('\\.[0-9]+_rt$', colnames(files))]
+    
   } else {
     multi <- NULL
   }
   
-  # Then remove the original Rts
-  files <- files[, -grep('\\.[0-9]+_rt$', colnames(files))]
+
   
   # Now I'm getting a discrepancy such that the response_time_ms variable thinks it took longer than the sum
   # says (whenever there is an error). This only happens rarely, and I can't figure out why. To be 
@@ -160,10 +163,13 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
     # Now to do the multiple choice responses - removing these one at a time due to the more complicated
     # structure. The !is.na calls aren't strictly neccesary but help to actually see what you're removing
     # if you use the code by hand. 
-    for (i in 1:length(multi)) {
-      rts <- paste0(multi[i], '_rt')
-      names <- grep(paste0(multi[i], '\\.[0-9]'), colnames(files), value = TRUE)
-      files[, names][files[rts] < rt.min & !is.na(files[rts]), ] <- NA
+    
+    if (length(multi) > 0) {
+      for (i in 1:length(multi)) {
+        rts <- paste0(multi[i], '_rt')
+        names <- grep(paste0(multi[i], '\\.[0-9]'), colnames(files), value = TRUE)
+        files[, names][files[rts] < rt.min & !is.na(files[rts]), ] <- NA
+      }
     }
     
     print (paste0(sum(files[, grep('_rt', colnames(files))] < rt.min & !is.na(files[, grep('_rt', colnames(files))])), 
