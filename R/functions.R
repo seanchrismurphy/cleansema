@@ -258,6 +258,15 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   
   if (!(is.null(na.value))) {
     print(paste0('Saving missing values as ', na.value))
+    # If people want to enter an arbritrary missing value, we need to convert the 'Date' columns back to character, because they do 
+    # -not- want random entries being included that don't fit. We only do this is there is missing data in a Date column. Which should 
+    # really only be datedlv but let's be as flexible as possible. 
+    
+    if (sum(is.na(files[sapply(files, function(x) class(x)) == 'Date'])) > 0) {
+      print('Warning: Converting date variables back to character in order to accept arbritrary values')
+      files[sapply(files, function(x) class(x)) == 'Date'] <- sapply(files[sapply(files, function(x) class(x)) == 'Date'], as.character)
+    }
+    
     files[is.na(files)] <- na.value
   }
   
