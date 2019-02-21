@@ -16,7 +16,7 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   # Note - I have updated the package to return a dataframe rather than save a csv. More flexibility and the number of lines of code to save the output
   # is roughly the same anyway. 
   if (grepl('.csv', input)) {
-    stop("input must be the folder containing sema data files, not a particular data file. For example 'Users/Sean/Data/sema_study_1_files/'.")
+    stop("input must be the folder containing sema data files, not a particular data file. For example '/Users/Sean/Data/sema_study_1_files'.")
   }
   
   print('Beginning cleaning process')
@@ -24,6 +24,10 @@ clean_sema <- function(input, rt.trim = FALSE, rt.min = 500, rt.threshold = .5, 
   # Stitch together all the different csvs for versions of the program (survey). Variables that only appear
   # in some surveys will be filled with NA in other survey sections.
   files = lapply(list.files(input, pattern = '*.csv', full.names = TRUE), read.csv, stringsAsFactors = FALSE)
+  
+  if (length(files) == 0) {
+    stop("No files found. Are you sure you put in the right folder location? It should look like '/Users/Sean/Data/sema_study_1_files'.")
+    }
   files <- plyr::rbind.fill(files)
   
   # Lower all the column names
