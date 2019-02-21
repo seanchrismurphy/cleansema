@@ -1,6 +1,6 @@
 Package: cleansema
 Title: Clean Sema Data
-Version: 0.1
+Version: 0.2
 Authors@R: person("Sean", "Murphy", email = "seanchrismurphy@gmail.com", role = c("aut", "cre"))
 Author: Sean Murphy [aut, cre]
 Maintainer: Sean Murphy <seanchrismurphy@gmail.com>
